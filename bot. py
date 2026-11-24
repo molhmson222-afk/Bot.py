@@ -1,4 +1,5 @@
-import csv
+uery.answer()
+    if notimport csv
 import io
 import json
 import logging
@@ -25,7 +26,8 @@ from telegram.ext import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-TELEGRAM_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+DEFAULT_TELEGRAM_TOKEN = "8668651260:AAHZZIiLBTcq8quYktcR7ODgfaoEcmCuxxo"
+TELEGRAM_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN") or DEFAULT_TELEGRAM_TOKEN
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 
 TEXT_ANALYSIS_MODEL = "gemini-2.5-flash"
@@ -181,86 +183,7 @@ async def annotate_chart_image(image_bytes: bytes, analysis_summary: str) -> byt
 5. بطاقة أو شريط جانبي/علوي مختصر وواضح على الصورة يوضح: الأصل (XAUUSD 5m)، مرحلة AMD، مستوى الوضوح/المصداقية الفنية، وتنويه مختصر بأن التحليل فني وليس ضماناً للنتيجة.
 
 استند في التعديلات إلى التحليل التالي:
-{analysis_summary}
-"""
-
-    response = gemini_client.models.generate_content(
-        model=IMAGE_EDIT_MODEL,
-        config=types.GenerateContentConfig(
-            response_modalities=["TEXT", "IMAGE"],
-            temperature=0.2,
-        ),
-        contents=[pil_img, edit_prompt],
-    )
-
-    if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
-        for part in response.candidates[0].content.parts:
-            if getattr(part, "inline_data", None) and part.inline_data.data:
-                raw_data = part.inline_data.data
-                if isinstance(raw_data, bytes):
-                    out_buf = io.BytesIO()
-                    Image.open(io.BytesIO(raw_data)).convert("RGB").save(out_buf, format="PNG")
-                    return out_buf.getvalue()
-
-    return None
-
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if not update.message or not update.effective_user:
-        return
-
-    user = update.effective_user
-    client = get_registered_client(user.id)
-
-    status_line = (
-        f"✅ *حسابك مسجل:* {client['name']} ({client['residence']})\nأرسل صورة شارت الذهب (5m) أو وصفاً نصياً للتحليل."
-        if client
-        else "⚠️ *مطلوب تسجيل البيانات أولاً:* اضغط على *(تسجيل / تحديث بياناتي)* لإدخال الاسم، الإقامة، الرقم، والإيميل."
-    )
-
-    await update.message.reply_text(
-        f"{SCOPE_BANNER}\n\n{status_line}",
-        parse_mode="Markdown",
-        reply_markup=main_menu_keyboard(),
-    )
-
-
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    if not query or not update.effective_user:
-        return
-    await query.answer()
-
-    if query.data == "show_rules":
-        await query.message.reply_text(
-            "🥇 *شروط عمل البوت:*\n"
-            "1. يعمل البوت *فقط على الذهب (XAUUSD) وفريم 5 دقائق (5m)*.\n"
-            "2. التحليل مجاني بالكامل ويعتمد على استراتيجية *AMD + FVG*.\n"
-            "3. عند إرسال صورة شارت، يتم تحليلها وتعديلها لإظهار *FVG، Entry، SL، TP1/TP2، ومستوى الوضوح والمصداقية* مباشرة عليها.\n"
-            "4. التحليل الفني يحدد مستويات مقترحة ولا يضمن تحقيق النتائج.",
-            parse_mode="Markdown",
-        )
-    elif query.data == "show_profile":
-        client = get_registered_client(update.effective_user.id)
-        if not client:
-            await query.message.reply_text("لم يتم العثور على تسجيل لك بعد. استخدم /register لتسجيل بياناتك.")
-            return
-        await query.message.reply_text(
-            "👤 *بياناتك المسجلة:*\n"
-            f"• *الاسم:* {client['name']}\n"
-            f"• *الإقامة:* {client['residence']}\n"
-            f"• *الرقم:* {client['phone']}\n"
-            f"• *الإيميل:* {client['email']}\n"
-            f"• *تاريخ التسجيل:* {client['registered_at']}",
-            parse_mode="Markdown",
-        )
-
-
-async def register_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    target_msg = update.callback_query.message if update.callback_query else update.message
-    if update.callback_query:
-        await update.callback_query.answer()
-    if not target_msg:
+ target_msg:
         return ConversationHandler.END
 
     context.user_data["reg_draft"] = {}
